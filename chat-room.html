@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <title>聊天室</title>
+  <link rel="stylesheet" type="text/css" media="screen" href="public/bootstrap.min.css">
+  <link href="public/style.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+<!--用户登录提示音-->
+<audio class="login-song" src="public/login.wav" autoplay preload="auto"></audio>
+<div id="content1" style="background:url('/public/bg1.jpg');">
+  <div id="roomName"><?php echo $chatroom->title?></div>
+  <div id="contentbg">
+  </div>
+  <div id="ltian">
+    <div class="jb" id="us">
+      <p eq="0" js="1" class="list ck" data-socket_id="1">所有人
+        <i class="autio"><?php echo $noread[0]?></i>
+      </p>
+      <p class="list" data-socket_id="2">鱼鱼鱼
+        <i class="autio">2</i>
+      </p>
+    </div>
+    <div id="title">
+      &nbsp;&nbsp;<span>聊聊天</span>
+      <span class="writing none">对方正在输入...</span>
+    </div>
+    <div id="ct">
+      <div id="content">
+        <p >
+          <span class="time">08-15 23：25：59</span></br>
+          <a>fish</a></br>
+          <i style="position:relative;" class="caoyuan">
+            <var>欢迎来到聊天室，请注意文明发言</var>
+            <a id="ss" class="ribbon1">
+              <span>房主</span>
+            </a>
+          </i>
+        </p>
+      </div>
+    </div>
+
+  </div>
+  <div id="hui">
+
+    <textarea id="huif"></textarea>
+    <div class="rin">
+      <ul>
+        <li id="again">重 写</li>
+        <li id="sd">发 送</li>
+        <div class="btn-group qipao-btn">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="javascript:;" data-style="">初始气泡</a></li>
+            <li><a href="javascript:;" data-style="caoyuan">为你加冕</a></li>
+            <li><a href="javascript:;" data-style="huochai">火柴超人</a></li>
+          </ul>
+        </div>
+      </ul>
+    </div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    $(function(){
+        var style = ''
+        var didi = 'public/msg.wav'
+        var didi = new Audio(didi);
+        var socket = io()
+        $('#sd').click(function () {
+            var msg = $('#huif').val()
+            if (!msg) return
+            var listID = $('.ck').data('list_id')
+            socket.emit('send msg', { msg: msg, style: style, list_id: listID })
+            $('#huif').val('')
+        })
+        socket.on('send msg', function(data){
+            var text = '<p >' +
+              '<span class="time">' + data.date + '</span></br>' +
+              '<a>' + data.name + '</a></br>' +
+              '<i style="position:relative;" class="' + data.style + '">' +
+              '<var>'+ data.msg + '</var>' +
+              '</i>' +
+              '</p>'
+            $('#content').append(text)
+            // didi.play();
+        })
+        $('#again').click(function () {
+            $("#huif").val('');
+        });
+        // 正在输入
+        $('#huif').focus(function () {
+            socket.emit('writing', {  })
+            $('.writing').hide()
+        })
+        socket.on('writing', function () {
+            if (!$('#huif').is(':focus')) {
+                $('.writing').show()
+            }
+        })
+        $('#huif').blur(function () {
+            socket.emit('blur', {  })
+        })
+        socket.on('blur', function () {
+            $('.writing').hide()
+        })
+        // 新用户加入
+        socket.on('online', function (data) {
+            let usersList = '<p class="list ck" data-socket_id="all">聊聊天</p>'
+            data.users.forEach(function(user) {
+                usersList += '<p class="list" data-socket_id="' + user.socketID + '">' + user.name + '</p>'
+            })
+            $('#us').html(usersList)
+        })
+        $('.dropdown-toggle').click(function(){ $('.dropdown-menu').show() })
+        // 选择气泡类型
+        $(".dropdown-menu li a").click(function(){
+            style = $(this).data('style')
+            $('.dropdown-menu').hide()
+        })
+        // 选择不同聊天室
+        $('.list').click(function () {
+            var listID = $(this).data('socket_id')
+            $(this).addClass('ck').siblings().removeClass('ck')
+            // 隐藏提示圆点
+            $(this).find('.autio').text('0')
+            $(this).find('.autio').hide()
+            socket.emit('1')
+            // socket.emit('join list', { list_id: listID })
+        })
+
+    })
+</script>
+</body>
+</html>
+<!-- https://github.com/chanywn/private-chat/blob/master/www/src/js/im.js -->
